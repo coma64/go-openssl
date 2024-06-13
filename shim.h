@@ -26,6 +26,7 @@
 #include <openssl/hmac.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
+#include <openssl/ssl3.h>
 #include <openssl/x509v3.h>
 #include <openssl/ec.h>
 
