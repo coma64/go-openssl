@@ -26,8 +26,6 @@
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
 
-// _cgo_export.h contains all function exported from go files (ones with a //export <function name>
-// above them)
 #include "_cgo_export.h"
 
 /*
@@ -438,22 +436,7 @@ int X_SSL_verify_cb(int ok, X509_STORE_CTX* store) {
 			SSL_get_ex_data_X509_STORE_CTX_idx());
 	void* p = SSL_get_ex_data(ssl, get_ssl_idx());
 	// get the pointer to the go Ctx object and pass it back into the thunk
-	// go_ssl_verify_cb_thunk function is exported inside ssl.go
 	return go_ssl_verify_cb_thunk(p, ok, store);
-}
-
-void X_SSL_message_callback(
-	int write_p,
-	int version,
-	int content_type,
-	const void *buf,
-	size_t len,
-	SSL *ssl,
-	void *arg,
-) {
-	void* goSslStruct = SSL_get_ex_data(ssl, get_ssl_idx());
-	// go_ssl_msg_cb_thunk function is exported inside ssl.go
-	go_ssl_message_callback_thunk(goSslStruct, write_p, version, content_type, buf, len);
 }
 
 const SSL_METHOD *X_SSLv23_method() {

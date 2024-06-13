@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <openssl/bio.h>
 #include <openssl/crypto.h>

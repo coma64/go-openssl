@@ -42,27 +42,9 @@ func get_ssl_idx() C.int {
 	return ssl_idx
 }
 
-type SSLContentType int
-
-const (
-	SSL3_RT_CHANGE_CIPHER_SPEC SSLContentType = C.SSL3_RT_CHANGE_CIPHER_SPEC
-	SSL3_RT_ALERT              SSLContentType = C.SSL3_RT_ALERT
-	SSL3_RT_HANDSHAKE          SSLContentType = C.SSL3_RT_HANDSHAKE
-	SSL3_RT_APPLICATION_DATA   SSLContentType = C.SSL3_RT_APPLICATION_DATA
-)
-
-type MessageCallback func(
-	ssl *SSL,
-	isSending bool,
-	protocolVersion Version,
-	contentType SSLContentType,
-	content []byte,
-)
-
 type SSL struct {
 	ssl       *C.SSL
 	verify_cb VerifyCallback
-	message_callback MessageCallback
 }
 
 //export go_ssl_verify_cb_thunk
@@ -84,39 +66,6 @@ func go_ssl_verify_cb_thunk(p unsafe.Pointer, ok C.int, ctx *C.X509_STORE_CTX) C
 		}
 	}
 	return ok
-}
-
-//export go_ssl_msg_cb_thunk
-func go_ssl_message_callback_thunk(
-	goSslStruct unsafe.Pointer,
-	write_p,
-	version,
-	content_type C.int,
-	buffer unsafe.Pointer,
-	bufferLength C.int,
-) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Critf("openssl: message callback panic'd: %v", err)
-			os.Exit(1)
-		}
-	}()
-
-	ssl := pointer.Restore(goSslStruct).(*SSL)
-	if ssl.message_callback == nil {
-		return
-	}
-
-	ssl.message_callback(
-		ssl,
-		write_p == 1,
-		Version(version),
-		SSLContentType(content_type),
-		// C.GoBytes creates a copy (https://pkg.go.dev/cmd/cgo) and the original
-		// buffer is freed by openssl:
-		// "The buffer is no longer valid after the callback function has returned"
-		C.GoBytes(buffer, bufferLength),
-	)
 }
 
 // Wrapper around SSL_get_servername. Returns server name according to rfc6066
@@ -143,19 +92,22 @@ func (s *SSL) ClearOptions(options Options) Options {
 	return Options(C.X_SSL_clear_options(s.ssl, C.long(options)))
 }
 
-// SetMsgCallback sets callback that's executed on every TLS message
-// sent or received. Note that version & content_type may contain invalid
-// values, see the openssl docs. Additionally, we chose to omit anything
-// related to SSL_set_msg_callback_arg as it can be easily replicated with
-// Golangs closures.
-// https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_msg_callback.html
-func (s *SSL) SetMsgCallback(callback MessageCallback) {
-	s.message_callback = callback
-	if s.message_callback != nil {
-		C.SSL_set_msg_callback(s.ssl, (*[0]byte)(C.X_SSL_message_callback))
-	} else {
-		C.SSL_set_msg_callback(s.ssl, nil)
+// EnableTracing enables tracing using openssls SSL_trace function.
+// If useStderr is false, stdout is used.
+// https://www.openssl.org/docs/manmaster/man3/SSL_trace.html
+func (s *SSL) EnableTracing(useStderr bool) {
+	output := C.stdout
+	if useStderr {
+		output = C.stderr
 	}
+
+	C.SSL_set_msg_callback(s.ssl, C.SSL_trace)
+	C.SSL_CTX_set_msg_callback_arg(s.ssl, C.BIO_new_fp(output, C.BIO_NOCLOSE));
+}
+
+func (s *SSL) DisableTracing() {
+	C.SSL_set_msg_callback(s.ssl, nil)
+	C.SSL_CTX_set_msg_callback_arg(s.ssl, nil);
 }
 
 // SetVerify controls peer verification settings. See
