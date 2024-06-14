@@ -101,14 +101,16 @@ func (s *SSL) EnableTracing(useStderr bool) {
 		output = C.stderr
 	}
 
-	C.SSL_set_msg_callback(s.ssl, C.SSL_trace)
-	C.SSL_CTX_set_msg_callback_arg(s.ssl, C.BIO_new_fp(output, C.BIO_NOCLOSE));
+	C.SSL_set_msg_callback(s.ssl, (*[0]byte)(C.SSL_trace))
+	// We cannot use SSL_set_msg_callback_arg directly because it's a macro.
+	C.SSL_ctrl(s.ssl, C.SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, unsafe.Pointer(C.BIO_new_fp(output, C.BIO_NOCLOSE)))
 }
 
 // DisableTracing unsets the msg callback from EnableTracing.
 func (s *SSL) DisableTracing() {
 	C.SSL_set_msg_callback(s.ssl, nil)
-	C.SSL_CTX_set_msg_callback_arg(s.ssl, nil);
+	// We cannot use SSL_set_msg_callback_arg directly because it's a macro.
+	C.SSL_ctrl(s.ssl, C.SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, nil)
 }
 
 // SetVerify controls peer verification settings. See
