@@ -616,3 +616,35 @@ func (c *Ctx) SessSetCacheSize(t int) int {
 func (c *Ctx) SessGetCacheSize() int {
 	return int(C.X_SSL_CTX_sess_get_cache_size(c.ctx))
 }
+
+// DaneEnable initializes shared state required for DANE support. Must be
+// called before any other Dane function.
+// https://www.openssl.org/docs/man1.1.1/man3/SSL_dane_clear_flags.html
+func (c *Ctx) DaneEnable() error {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	if C.SSL_CTX_dane_enable(c.ctx) <= 0 {
+		return errorFromErrorQueue()
+	}
+
+	return nil
+}
+
+type DaneFlag int
+
+const (
+	DaneFlagNoDaneEeNamechecks DaneFlag = C.DANE_FLAG_NO_DANE_EE_NAMECHECKS
+)
+
+// DaneSetFlags enables the default flags of every connection associated
+// this context. See DaneFlag for available flags.
+// https://www.openssl.org/docs/man1.1.1/man3/SSL_dane_clear_flags.html
+func (c *Ctx) DaneSetFlags(flags int) (oldFlags int) {
+	return int(C.SSL_CTX_dane_set_flags(c.ctx, C.ulong(flags)))
+}
+
+// DaneClearFlags disables flags set by DaneSetFlags.
+func (c *Ctx) DaneClearFlags(flags int) (oldFlags int) {
+	return int(C.SSL_CTX_dane_clear_flags(c.ctx, C.ulong(flags)))
+}

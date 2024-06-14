@@ -20,6 +20,7 @@ import "C"
 import (
 	"os"
 	"unsafe"
+	"runtime"
 
 	"github.com/mattn/go-pointer"
 )
@@ -181,6 +182,72 @@ func (s *SSL) GetVersion() string {
 	return C.GoString(C.SSL_get_version(s.ssl))
 }
 
+// DaneEnable enables DANE validation for this connection. It must be called
+// before the TLS handshake.
+// https://www.openssl.org/docs/man1.1.1/man3/SSL_dane_clear_flags.html
+func (s *SSL) DaneEnable(tlsaBaseDomain string) error {
+	tlsaBaseDomainCString := C.CString(tlsaBaseDomain)
+	defer C.free(unsafe.Pointer(tlsaBaseDomainCString))
+
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	if C.SSL_dane_enable(s.ssl, tlsaBaseDomainCString) <= 0 {
+		return errorFromErrorQueue()
+	}
+
+	return nil
+}
+
+// DaneTlsaAdd loads a TLSA record that will be validated against the presented certificate.
+// Data must be in wire form, not hex ASCII. If all TLSA records you try to add are unusable
+// (isUsable return value) an opportunistic application must disable peer authentication by
+// using a verify mode equal to VerifyNone.
+// https://www.openssl.org/docs/man1.1.1/man3/SSL_dane_clear_flags.html
+func (s *SSL) DaneTlsaAdd(usage, selector, matchingType byte, data []byte) (isUsable bool, err error) {
+	cData := C.CBytes(data)
+	defer C.free(cData)
+
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	if status := C.SSL_dane_tlsa_add(
+		s.ssl,
+		C.uchar(usage),
+		C.uchar(selector),
+		C.uchar(matchingType),
+		(*C.uchar)(cData),
+		C.ulong(len(data)),
+	); status < 0 {
+		return false, errorFromErrorQueue()
+	} else if status == 0 {
+		return false, nil
+	} else {
+		return true, nil
+	}
+}
+
+// DaneGet0DaneAuthority returns a value that is negative if DANE verification failed (or
+// was not enabled), 0 if an EE TLSA record directly matched the leaf certificate, or a
+// positive number indicating the depth at which a TA record matched an issuer certificate.
+// However, the depth doesn't refer to the list of certificates as sent by the peer but rather
+// how it's returned from SSL_get0_verified_chain.
+// https://www.openssl.org/docs/man1.1.1/man3/SSL_dane_clear_flags.html
+func (s *SSL) DaneGet0DaneAuthority() int {
+	return int(C.SSL_get0_dane_authority(s.ssl, nil, nil))
+}
+
+// DaneSetFlags enables the given flags for this connection.
+// https://www.openssl.org/docs/man1.1.1/man3/SSL_dane_clear_flags.html
+func (s *SSL) DaneSetFlags(flags int) (oldFlags int) {
+	return int(C.SSL_dane_set_flags(s.ssl, C.ulong(flags)))
+}
+
+// DaneClearFlags disables flags set by DaneSetFlags.
+func (s *SSL) DaneClearFlags(flags int) (oldFlags int) {
+	return int(C.SSL_dane_clear_flags(s.ssl, C.ulong(flags)))
+}
+
 //export sni_cb_thunk
 func sni_cb_thunk(p unsafe.Pointer, con *C.SSL, ad unsafe.Pointer, arg unsafe.Pointer) C.int {
 	defer func() {
@@ -199,3 +266,4 @@ func sni_cb_thunk(p unsafe.Pointer, con *C.SSL, ad unsafe.Pointer, arg unsafe.Po
 	// Note: this is ctx.sni_cb, not C.sni_cb
 	return C.int(sni_cb(s))
 }
+
