@@ -92,8 +92,8 @@ func (s *SSL) ClearOptions(options Options) Options {
 	return Options(C.X_SSL_clear_options(s.ssl, C.long(options)))
 }
 
-// EnableTracing enables tracing using openssls SSL_trace function.
-// If useStderr is false, stdout is used.
+// EnableTracing enables TLS handshake tracing using openssls
+// SSL_trace function. If useStderr is false, stdout is used.
 // https://www.openssl.org/docs/manmaster/man3/SSL_trace.html
 func (s *SSL) EnableTracing(useStderr bool) {
 	output := C.stdout
@@ -105,6 +105,7 @@ func (s *SSL) EnableTracing(useStderr bool) {
 	C.SSL_CTX_set_msg_callback_arg(s.ssl, C.BIO_new_fp(output, C.BIO_NOCLOSE));
 }
 
+// DisableTracing unsets the msg callback from EnableTracing.
 func (s *SSL) DisableTracing() {
 	C.SSL_set_msg_callback(s.ssl, nil)
 	C.SSL_CTX_set_msg_callback_arg(s.ssl, nil);
