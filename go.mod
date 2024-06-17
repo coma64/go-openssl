@@ -1,4 +1,4 @@
-module github.com/tarantool/go-openssl
+module github.com/coma64/go-openssl
 
 require (
 	github.com/mattn/go-pointer v0.0.1
