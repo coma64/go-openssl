@@ -239,13 +239,13 @@ func (s *SSL) DaneGet0DaneAuthority() int {
 
 // DaneSetFlags enables the given flags for this connection.
 // https://www.openssl.org/docs/man1.1.1/man3/SSL_dane_clear_flags.html
-func (s *SSL) DaneSetFlags(flags int) (oldFlags int) {
-	return int(C.SSL_dane_set_flags(s.ssl, C.ulong(flags)))
+func (s *SSL) DaneSetFlags(flags DaneFlags) (oldFlags DaneFlags) {
+	return DaneFlags(C.SSL_dane_set_flags(s.ssl, C.ulong(flags)))
 }
 
 // DaneClearFlags disables flags set by DaneSetFlags.
-func (s *SSL) DaneClearFlags(flags int) (oldFlags int) {
-	return int(C.SSL_dane_clear_flags(s.ssl, C.ulong(flags)))
+func (s *SSL) DaneClearFlags(flags DaneFlags) (oldFlags DaneFlags) {
+	return DaneFlags(C.SSL_dane_clear_flags(s.ssl, C.ulong(flags)))
 }
 
 //export sni_cb_thunk

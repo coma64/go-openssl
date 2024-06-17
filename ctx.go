@@ -631,20 +631,20 @@ func (c *Ctx) DaneEnable() error {
 	return nil
 }
 
-type DaneFlag int
+type DaneFlags int
 
 const (
-	DaneFlagNoDaneEeNamechecks DaneFlag = C.DANE_FLAG_NO_DANE_EE_NAMECHECKS
+	DaneFlagNoDaneEeNamechecks DaneFlags = C.DANE_FLAG_NO_DANE_EE_NAMECHECKS
 )
 
 // DaneSetFlags enables the default flags of every connection associated
 // this context. See DaneFlag for available flags.
 // https://www.openssl.org/docs/man1.1.1/man3/SSL_dane_clear_flags.html
-func (c *Ctx) DaneSetFlags(flags int) (oldFlags int) {
-	return int(C.SSL_CTX_dane_set_flags(c.ctx, C.ulong(flags)))
+func (c *Ctx) DaneSetFlags(flags DaneFlags) (oldFlags DaneFlags) {
+	return DaneFlags(C.SSL_CTX_dane_set_flags(c.ctx, C.ulong(flags)))
 }
 
 // DaneClearFlags disables flags set by DaneSetFlags.
-func (c *Ctx) DaneClearFlags(flags int) (oldFlags int) {
-	return int(C.SSL_CTX_dane_clear_flags(c.ctx, C.ulong(flags)))
+func (c *Ctx) DaneClearFlags(flags DaneFlags) (oldFlags DaneFlags) {
+	return DaneFlags(C.SSL_CTX_dane_clear_flags(c.ctx, C.ulong(flags)))
 }
