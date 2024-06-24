@@ -28,7 +28,8 @@ type Digest struct {
 }
 
 // GetDigestByName returns the Digest with the name or nil and an error if the
-// digest was not found.
+// digest was not found. Use `openssl list -digest-algorithms` to list available
+// digest names.
 func GetDigestByName(name string) (*Digest, error) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))

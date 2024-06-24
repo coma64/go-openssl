@@ -430,3 +430,14 @@ func (c *Certificate) GetExtensionValue(nid NID) []byte {
 	val := C.get_extention(c.x, C.int(nid), &dataLength)
 	return C.GoBytes(unsafe.Pointer(val), dataLength)
 }
+
+// Hash uses the given digest to generate a hash of the certificate. Use GetDigestByName
+// to get a digest.
+func (c *Certificate) Hash(digest *Digest) []byte {
+	var hashLength C.uint
+	hash := make([]byte, C.EVP_MAX_MD_SIZE)
+
+	C.X509_digest(c.x, digest.ptr, (*C.uchar)(unsafe.Pointer(&hash[0])), &hashLength)
+
+	return hash[:hashLength]
+}
