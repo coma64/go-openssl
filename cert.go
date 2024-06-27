@@ -441,3 +441,16 @@ func (c *Certificate) Hash(digest *Digest) []byte {
 
 	return hash[:hashLength]
 }
+
+// VerifyCertErrorString returns a human-readable error string for the given verification error.
+// https://www.openssl.org/docs/man3.1/man3/X509_verify_cert_error_string.html
+func VerifyCertErrorString(errorCode int) string {
+	// Locking the thread because the docs say:
+	// If an unrecognised error code is passed to X509_verify_cert_error_string() the
+	// numerical value of the unknown code is returned in a static buffer. This is not
+	// thread safe but will never happen unless an invalid code is passed.
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	return C.GoString(C.X509_verify_cert_error_string(C.long(errorCode)))
+}
