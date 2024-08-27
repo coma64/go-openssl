@@ -11,6 +11,12 @@ Versioning](http://semver.org/spec/v2.0.0.html) except to the first release.
 
 ### Added
 
+- Bindings for [DANE](https://docs.openssl.org/1.1.1/man3/SSL_CTX_dane_enable/)
+- Bindings for [TLS handshake tracing](https://docs.openssl.org/master/man3/SSL_CTX_set_msg_callback/)
+- Bindings for `X509_digest()`
+- Bindings for `X509_verify_cert_error_string()`
+- Bindings for `SSL_get_version()`
+
 ### Changed
 
 ### Fixed

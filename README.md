@@ -6,6 +6,7 @@ Forked from https://github.com/libp2p/openssl (unmaintained) to add:
 2. Fix build on Apple M1.
 3. Fix static build.
 4. Fix error extraction on key reading.
+5. Bindings for DANE
 
 ### License
 
