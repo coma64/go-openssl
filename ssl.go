@@ -225,6 +225,7 @@ func (s *SSL) DaneTlsaAdd(usage, selector, matchingType byte, data []byte) (isUs
 	} else {
 		return true, nil
 	}
+
 }
 
 // DaneGet0DaneAuthority returns a value that is negative if DANE verification failed (or
