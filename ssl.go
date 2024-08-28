@@ -19,8 +19,8 @@ import "C"
 
 import (
 	"os"
-	"unsafe"
 	"runtime"
+	"unsafe"
 
 	"github.com/mattn/go-pointer"
 )
@@ -266,4 +266,3 @@ func sni_cb_thunk(p unsafe.Pointer, con *C.SSL, ad unsafe.Pointer, arg unsafe.Po
 	// Note: this is ctx.sni_cb, not C.sni_cb
 	return C.int(sni_cb(s))
 }
-
