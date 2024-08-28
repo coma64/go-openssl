@@ -217,7 +217,7 @@ func (s *SSL) DaneTlsaAdd(usage, selector, matchingType byte, data []byte) (isUs
 		C.uchar(selector),
 		C.uchar(matchingType),
 		(*C.uchar)(cData),
-		C.ulong(len(data)),
+		C.size_t(len(data)),
 	); status < 0 {
 		return false, errorFromErrorQueue()
 	} else if status == 0 {
